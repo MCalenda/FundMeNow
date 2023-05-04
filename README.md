@@ -1,7 +1,7 @@
 <div align = "center">
 
-[![GitHub contributors](https://img.shields.io/github/contributors/MCalenda/FundMeNow?style=for-the-badge)](https://GitHub.com/MCalenda/FundMeNow/graphs/contributors)&nbsp;
-[![GitHub issues](https://img.shields.io/github/issues/MCalenda/FundMeNow?style=for-the-badge)](https://GitHub.com/MCalenda/FundMeNow/issues)&nbsp;
+[![GitHub contributors](https://img.shields.io/github/contributors/MCalenda/FundMeNow?style=for-the-badge)](https://GitHub.com/MCalenda/FundMeNow/graphs/contributors)
+[![GitHub issues](https://img.shields.io/github/issues/MCalenda/FundMeNow?style=for-the-badge)](https://GitHub.com/MCalenda/FundMeNow/issues)
 [![GitHub forks](https://img.shields.io/github/forks/MCalenda/FundMeNow?style=for-the-badge)](https://GitHub.com/MCalenda/FundMeNow/fork)
 
 </div>
