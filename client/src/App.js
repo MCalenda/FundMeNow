@@ -1,10 +1,10 @@
 import './App.css';
-import SimpleStorage from './components/SimpleStorage';
+import CrowdFunding from './components/CrowdFunding';
 
 export default function App() {
   return (
     <div>
-      <SimpleStorage />
+      <CrowdFunding />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { useState } from "react";
 
-export default function SimpleStorage() {
+export default function CrowdFunding() {
   let signer = null;
   let provider = null;
 
