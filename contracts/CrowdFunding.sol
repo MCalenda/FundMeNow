@@ -34,25 +34,22 @@ contract CrowdFunding {
         owner = msg.sender;
     }
 
-    modifier OnlyOwner(uint16 _projectId) {
+    modifier OnlyOwner(uint16 _id) {
         require(
-            msg.sender == projects[_projectId].owner,
+            msg.sender == projects[_id].owner,
             "Only owner can do this operation."
         );
         _;
     }
 
-    modifier ProjectExists(uint16 _projectId) {
-        require(
-            _projectId > 0 && _projectId <= projectCount,
-            "Project does not exist."
-        );
+    modifier ProjectExists(uint16 _id) {
+        require(_id > 0 && _id <= projectCount, "Project does not exist.");
         _;
     }
 
-    modifier OnlyContributors(uint16 _projectId) {
+    modifier OnlyContributors(uint16 _id) {
         require(
-            contributions[_projectId][msg.sender] > 0,
+            contributions[_id][msg.sender] > 0,
             "Only contributors can do this operation."
         );
         _;
@@ -86,10 +83,10 @@ contract CrowdFunding {
 
     function fundProject(uint16 _id) public payable ProjectExists(_id) {
         require(msg.value > 0);
-
         Project memory _project = projects[_id];
+        address _owner = _project.owner;
 
-        // Check if the Project is open for funding
+        // Check if the project is open for funding
         require(
             (_project.state != State.CLOSED_OBJ_REACHED) &&
                 (_project.state != State.CLOSED_OBJ_FAILED),
@@ -97,11 +94,21 @@ contract CrowdFunding {
         );
 
         // Check if the owner is trying to fund and reject it
-        address _owner = _project.owner;
         require(
             _owner != msg.sender,
             "Owner can't fund the project created by themselves."
         );
+
+        // Check if the project is expired
+        if (block.timestamp >= _project.endDate) {
+            if (_project.balance >= _project.target) {
+                _project.state = State.CLOSED_OBJ_REACHED;
+            } else {
+                _project.state = State.CLOSED_OBJ_FAILED;
+            }
+            emit ProjectClosed(_id);
+            revert("Project has expired.");
+        }
 
         _project.balance += msg.value;
         if (_project.balance >= _project.target) {
@@ -110,8 +117,6 @@ contract CrowdFunding {
         }
         projects[_id] = _project;
         contributions[_id][msg.sender] += msg.value;
-
-        emit ProjectFunded(_project.id);
     }
 
     function closeProject(uint16 _id) public OnlyOwner(_id) ProjectExists(_id) {
@@ -142,15 +147,22 @@ contract CrowdFunding {
     ) public OnlyContributors(_id) ProjectExists(_id) {
         Project memory _project = projects[_id];
 
+        require(
+            _project.state != State.CLOSED_OBJ_REACHED,
+            "Project objective is reached."
+        );
+
         // Check if the project is closed and objective is not reached
         require(
-            _project.state == State.CLOSED_OBJ_FAILED,
-            "Project is not closed or objective is reached."
+            (_project.state != State.OPEN) &&
+                (_project.state != State.OPEN_OBJ_REACHED),
+            "Project is not closed."
         );
 
         uint256 contribution = contributions[_id][msg.sender];
         _project.balance -= contribution;
         contributions[_id][msg.sender] = 0;
+        projects[_id] = _project;
 
         stillFund
             ? payable(_project.owner).transfer(contribution)
@@ -161,13 +173,5 @@ contract CrowdFunding {
         uint16 _id
     ) public view ProjectExists(_id) returns (Project memory) {
         return projects[_id];
-    }
-
-    function isClosed(
-        uint16 _id
-    ) public view ProjectExists(_id) returns (bool) {
-        return
-            projects[_id].state == State.CLOSED_OBJ_FAILED ||
-            projects[_id].state == State.CLOSED_OBJ_REACHED;
     }
 }
