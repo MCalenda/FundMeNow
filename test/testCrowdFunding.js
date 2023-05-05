@@ -99,6 +99,7 @@ contract("CrowdFunding", (accounts) => {
   });
 
   it("creates a project", async () => {
+    let project;
     let lastProjectId = await cf.projectCount();
 
     await cf.createProject(
@@ -156,6 +157,8 @@ contract("CrowdFunding", (accounts) => {
   });
 
   it("funds a project", async () => {
+    let project;
+
     await cf.fundProject(open, {
       from: account2,
       value: web3.utils.toWei("1", "Ether"),
@@ -197,6 +200,10 @@ contract("CrowdFunding", (accounts) => {
   });
 
   it("closes a project", async () => {
+    let balanceBefore;
+    let balanceAfter;
+    let project;
+
     await tassert.reverts(
       cf.closeProject(open, {
         from: account2,
@@ -205,24 +212,33 @@ contract("CrowdFunding", (accounts) => {
       "Users can close not their own projects."
     );
 
+    balanceBefore = +(await web3.eth.getBalance(account1));
     await cf.closeProject(open, {
       from: account1,
     });
-    let projectOpen = await cf.getProject(open);
+    balanceAfter = +(await web3.eth.getBalance(account1));
+    project = await cf.getProject(open);
     assert.equal(
-      projectOpen.state,
+      project.state,
       3, // CLOSED_OBJ_FAILED
       "The project has not been correctly closed."
     );
 
+    balanceBefore = +(await web3.eth.getBalance(account1));
     await cf.closeProject(openObjReached, {
       from: account1,
     });
-    let projectOpenObjReached = await cf.getProject(openObjReached);
+    balanceAfter = +(await web3.eth.getBalance(account1));
+    project = await cf.getProject(openObjReached);
     assert.equal(
-      projectOpenObjReached.state,
+      project.state,
       2, // CLOSED_OBJ_REACHED
       "The project has not been correctly closed."
+    );
+    assert.isBelow(
+      balanceBefore,
+      balanceAfter,
+      "After closing, the balance is not correct."
     );
 
     await tassert.reverts(
@@ -243,6 +259,10 @@ contract("CrowdFunding", (accounts) => {
   });
 
   it("withdraws from project balance", async () => {
+    let balanceBefore;
+    let balanceAfter;
+    let project;
+
     // chech if not-contributors can withdraw
     await tassert.reverts(
       cf.withdraw(closedObjFailed, true, { from: account3 }),
@@ -256,7 +276,7 @@ contract("CrowdFunding", (accounts) => {
         from: account3,
       }),
       "Project objective is reached.",
-      "Users can withdraw from open project."
+      "Contributors can withdraw from closed project with objective reached."
     );
 
     // chech if contributors can withdraw from open project
@@ -268,16 +288,17 @@ contract("CrowdFunding", (accounts) => {
       "Users can withdraw from open project."
     );
 
-    let projectOpenBefore = await cf.getProject(closedObjFailed);
-    let balanceBefore = +(await web3.eth.getBalance(account3));
+    // check if owner get paid when project is closed with object not reached
+    // and contributors withdraw with stillFund = true
+    balanceBefore = +(await web3.eth.getBalance(account3));
     await cf.withdraw(closedObjFailed, true, {
       from: account2,
     });
-    let balanceAfter = +(await web3.eth.getBalance(account3));
-    let projectOpenAfter = await cf.getProject(closedObjFailed);
+    balanceAfter = +(await web3.eth.getBalance(account3));
+    project = await cf.getProject(closedObjFailed);
 
     assert.equal(
-      projectOpenAfter.balance,
+      project.balance,
       0,
       "The withdraw has not been correctly done."
     );
@@ -285,7 +306,7 @@ contract("CrowdFunding", (accounts) => {
     assert.isBelow(
       balanceBefore,
       balanceAfter,
-      "The withdraw has not been correctly done."
+      "The withdraw with stillFund has not been correctly done."
     );
   });
 });

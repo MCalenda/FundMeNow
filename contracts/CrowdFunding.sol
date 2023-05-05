@@ -130,8 +130,8 @@ contract CrowdFunding {
         );
 
         if (_project.state == State.OPEN_OBJ_REACHED) {
-            _project.balance = 0;
             payable(_project.owner).transfer(_project.balance);
+            _project.balance = 0;
             _project.state = State.CLOSED_OBJ_REACHED;
         } else {
             _project.state = State.CLOSED_OBJ_FAILED;
