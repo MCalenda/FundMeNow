@@ -6,6 +6,7 @@ contract("CrowdFunding", (accounts) => {
   let cf;
   let cfOwner;
   let cfAddress;
+  let startingProjectCount;
 
   // dummy accounts
   let deployer = accounts[0];
@@ -26,6 +27,7 @@ contract("CrowdFunding", (accounts) => {
     cf = await CrowdFunding.new();
     cfOwner = await cf.owner();
     cfAddress = cf.address;
+    startingProjectCount = await cf.projectCount();
 
     // get the timestamp in seconds
     ts = Math.floor(new Date().getTime() / 1000);
@@ -96,6 +98,13 @@ contract("CrowdFunding", (accounts) => {
     assert.notEqual(cfAddress, "", "Address is not correct.");
     assert.notEqual(cfAddress, null, "Address is not correct.");
     assert.notEqual(cfAddress, undefined, "Address is not correct.");
+
+    let projects = await cf.getAllProjects();
+    assert.equal(
+      projects.length,
+      startingProjectCount.toNumber() + 4,
+      "The number of projects deployed is not correct."
+    );
   });
 
   it("creates a project", async () => {

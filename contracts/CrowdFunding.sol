@@ -32,6 +32,7 @@ contract CrowdFunding {
 
     constructor() {
         owner = msg.sender;
+        createProject("Prova", "Questo e' un progetto di prova", 1692007200 , 10000000000000000000);
     }
 
     modifier OnlyOwner(uint16 _id) {
@@ -173,5 +174,13 @@ contract CrowdFunding {
         uint16 _id
     ) public view ProjectExists(_id) returns (Project memory) {
         return projects[_id];
+    }
+
+    function getAllProjects() public view returns (Project[] memory) {
+        Project[] memory _projects = new Project[](projectCount);
+        for (uint16 i = 1; i <= projectCount; i++) {
+            _projects[i - 1] = projects[i];
+        }
+        return _projects;
     }
 }
