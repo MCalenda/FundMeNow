@@ -4,8 +4,16 @@
 set -o errexit
 
 # Executes cleanup function at script exit.
-trap "pkill ganache" EXIT
+trap cleanup EXIT
 
+cleanup() {
+  # Kill the ganache instance that we started (if we started one and if it's still running).
+  if [ -n "$ganache_pid" ] && ps -p $ganache_pid > /dev/null; then
+    kill -9 $ganache_pid
+  fi
+
+  pkill node
+}
 ganache_port=8545
 
 ganache_running() {
