@@ -5,8 +5,6 @@ import { Container } from "react-bootstrap";
 export default function RootLayout() {
   return (
     <Container>
-      <Header />
-
       <main>
         <Outlet />
       </main>

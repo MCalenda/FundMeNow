@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 contract CrowdFunding {
     enum State {
         OPEN, // Open for funding, objective not reached
@@ -25,14 +27,25 @@ contract CrowdFunding {
         uint256 target; // Target of the project (in wei)
     }
 
-    event ProjectCreated(uint16 id);
-    event ProjectFunded(uint16 id);
-    event ProjectReachedObjective(uint16 id);
-    event ProjectClosed(uint16 id);
+    event ProjectCreated(uint16 _id);
+    event ProjectFunded(uint16 _id);
+    event ProjectReachedObjective(uint16 _id);
+    event ProjectClosed(uint16 _id);
 
     constructor() {
         owner = msg.sender;
-        createProject("Prova", "Questo e' un progetto di prova", 1692007200 , 10000000000000000000);
+        createProject(
+            "Prova",
+            "Questo e' un progetto di prova",
+            1692007200,
+            10000000000000000000
+        );
+        createProject(
+            "Un altro progetto",
+            "Questo e' il secondo progetto di prova",
+            1895007200,
+            20000000000000000000
+        );
     }
 
     modifier OnlyOwner(uint16 _id) {
@@ -55,6 +68,8 @@ contract CrowdFunding {
         );
         _;
     }
+
+    // Functionalities
 
     function createProject(
         string memory _name,
@@ -170,10 +185,97 @@ contract CrowdFunding {
             : payable(msg.sender).transfer(contribution);
     }
 
+    // Project getters in string form
+    function getProjectId(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        return Strings.toString(projects[_id].id);
+    }
+
+    function getProjectName(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        return projects[_id].name;
+    }
+
+    function getProjectDescription(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        return projects[_id].desc;
+    }
+
+    function getProjectEndDate(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        return Strings.toString(projects[_id].endDate);
+    }
+
+    function getProjectTarget(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        return Strings.toString(projects[_id].target);
+    }
+
+    function getProjectBalance(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        return Strings.toString(projects[_id].balance);
+    }
+
+    function getProjectState(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        if (projects[_id].state == State.OPEN) {
+            return "OPEN";
+        } else if (projects[_id].state == State.OPEN_OBJ_REACHED) {
+            return "OPEN_OBJ_REACHED";
+        } else if (projects[_id].state == State.CLOSED_OBJ_REACHED) {
+            return "CLOSED_OBJ_REACHED";
+        } else {
+            return "CLOSED_OBJ_FAILED";
+        }
+    }
+
+    function getProjectOwner(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (address) {
+        return projects[_id].owner;
+    }
+
+    function getProjectContributions(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string memory) {
+        return Strings.toString(contributions[_id][msg.sender]);
+    }
+
+    function getProjectContributors(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (address[] memory) {
+        address[] memory _contributors = new address[](projectCount);
+        for (uint16 i = 1; i <= projectCount; i++) {
+            _contributors[i - 1] = projects[i].owner;
+        }
+        return _contributors;
+    }
+
     function getProject(
         uint16 _id
     ) public view ProjectExists(_id) returns (Project memory) {
         return projects[_id];
+    }
+
+    function getProjectReadable(
+        uint16 _id
+    ) public view ProjectExists(_id) returns (string[] memory) {
+        string[] memory _project = new string[](7);
+        _project[0] = getProjectId(_id);
+        _project[1] = getProjectName(_id);
+        _project[2] = getProjectDescription(_id);
+        _project[3] = getProjectEndDate(_id);
+        _project[4] = getProjectTarget(_id);
+        _project[5] = getProjectBalance(_id);
+        _project[6] = getProjectState(_id);
+        return _project;
     }
 
     function getAllProjects() public view returns (Project[] memory) {

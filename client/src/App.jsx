@@ -1,3 +1,4 @@
+// components
 import {
   createBrowserRouter,
   Route,
@@ -5,26 +6,20 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
-import EthProvider from "./contexts/EthProvider";
-
+// pages
 import HomePage, { projLoader } from "./pages/HomePage";
-import ConnectPage from "./pages/ConnectPage";
 
+// layouts
 import RootLayout from "./layouts/RootLayout";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<RootLayout />}>
-      <Route index element={<ConnectPage />} />
-      <Route path="home" element={<HomePage />} loader={projLoader} />
+      <Route index element={<HomePage />} loader={projLoader} />
     </Route>
   )
 );
 
 export default function App() {
-  return (
-    <RouterProvider router={router}>
-      <EthProvider></EthProvider>
-    </RouterProvider>
-  );
+  return <RouterProvider router={router}></RouterProvider>;
 }
