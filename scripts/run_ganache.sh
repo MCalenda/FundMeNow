@@ -1,2 +1,2 @@
 #!/bin/bash
-ganache-cli -d --db ../blockchain -i 123 --gasLimit 0x1fffffffffffff --gasPrice 0x1 --port 8545
+ganache-cli -d -b 0 -i 123456 --port 8545 --database.dbPath ./ganache_db

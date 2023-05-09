@@ -4,141 +4,238 @@ import { ethers } from "ethers";
 import { abi } from "../abi/CrowdFunding";
 
 import CardProject from "../components/CardProject";
-import { Container, Row, Col, Modal, Button } from "react-bootstrap";
+
+import { Container, Row, Col, Button, Toast } from "react-bootstrap";
+
+import CreateProjectModal from "../components/CreateProjectModal";
+import Header from "../components/Header";
 
 export default function HomePage() {
-  const [errorMessage, setErrorMessage] = useState("");
-  const [account, setAccount] = useState("");
-  const [connButtonText, setConnButtonText] = useState("Connect Account");
+  const [currentAccount, setCurrentAccount] = useState(undefined);
   const [projects, setProjects] = useState([]);
 
   // create project modal
-  const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  const [createProjectVisible, setCreateProjectVisible] = useState(false);
+  const showCreateProject = () => setCreateProjectVisible(true);
+  const hideCreateProject = () => setCreateProjectVisible(false);
 
-  const address = "0x4c51C686CBE79e26B8Cc93b04BF0f530E7B0a872";
+  // error message
+  const [errorMessageVisible, setErrorMessageVisible] = useState(false);
+  const showErrorMessage = () => setErrorMessageVisible(true);
+  const hideErrorMessage = () => setErrorMessageVisible(false);
+  const [errorMessage, setErrorMessage] = useState(undefined);
+
+  const address = "0xCfEB869F69431e42cdB54A4F4f105C19C080A601";
 
   // Sets up a new Ethereum provider and returns
   // an interface for interacting with the smart contract
   async function initializeProvider() {
-    if (window.ethereum == null) {
-      setErrorMessage("No MetaMask detected, using default provider");
-      const provider = ethers.getDefaultProvider();
-    } else {
+    if (window.ethereum) {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       return new ethers.Contract(address, abi, signer);
+    } else {
+      showErrorMessage();
+      setErrorMessage("No MetaMask detected");
     }
   }
 
   // Displays a prompt for the user to select which accounts to connect
   async function requestAccount() {
-    setAccount("");
-    const account = await window.ethereum.request({
-      method: "eth_requestAccounts",
-    });
-    if (account != "") {
-      setConnButtonText("Connected");
-      setAccount(account[0]);
-    } else {
-      setConnButtonText("Connect Account");
-      setErrorMessage("Please connect an account to continue");
-    }
-  }
-
-  async function fetchProjects() {
-    if (typeof window.ethereum !== "undefined") {
-      const contract = await initializeProvider();
-      try {
-        const projectCount = parseInt(await contract.projectCount());
-        let _projects = [];
-        for (let i = 1; i < projectCount + 1; i++) {
-          const _project = {
-            id: await contract.getProjectId(i),
-            name: await contract.getProjectName(i),
-            description: await contract.getProjectDescription(i),
-            endDate: await contract.getProjectEndDate(i),
-            target: await contract.getProjectTarget(i),
-            balance: await contract.getProjectBalance(i),
-            state: await contract.getProjectState(i),
-          };
-          _projects.push(_project);
-        }
-        setProjects(_projects);
-      } catch (err) {
-        console.log(err.message);
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      setCurrentAccount(accounts[0]);
+    } catch (error) {
+      // pending connection
+      if (error.code == -32002) {
+        showErrorMessage();
+        setErrorMessage("Connection in pending, check your MetaMask extension");
+      }
+      // user rejected connection
+      if (error.code == 4001) {
+        showErrorMessage();
+        setErrorMessage("Connection rejected");
       }
     }
   }
 
-  async function createProject() {
-    if (typeof window.ethereum !== "undefined") {
-      const contract = await initializeProvider();
-      try {
-        const tx = await contract.createProject(
-          "New Project",
-          "This is a new project",
-          1895007200,
-          ethers.parseEther("20")
-        );
-        await tx.wait();
-        fetchProjects();
-      } catch (err) {
-        console.log(err.message);
+  async function fetchProjects() {
+    const contract = await initializeProvider();
+    try {
+      const projectCount = parseInt(await contract.projectCount());
+      let _projects = [];
+      for (let i = 1; i < projectCount + 1; i++) {
+        const project = {
+          id: await contract.getProjectId(i),
+          name: await contract.getProjectName(i),
+          description: await contract.getProjectDescription(i),
+          endDate: await contract.getProjectEndDate(i),
+          target: await contract.getProjectTarget(i),
+          balance: await contract.getProjectBalance(i),
+          state: await contract.getProjectState(i),
+          owner: await contract.getProjectOwner(i),
+          contribution: await contract.getProjectContributions(i),
+        };
+        _projects.push(project);
+      }
+      setProjects(_projects);
+    } catch (err) {
+      showErrorMessage();
+      setErrorMessage("Fetching project failed");
+    }
+  }
+
+  async function handleCreateProject(_name, _description, _endDate, _target) {
+    const contract = await initializeProvider();
+    let ethersToWei = ethers.parseUnits(_target.toString(), "ether");
+    try {
+      const tx = await contract.createProject(
+        _name,
+        _description,
+        _endDate / 1000,
+        ethersToWei
+      );
+      await tx.wait();
+      fetchProjects();
+      hideCreateProject();
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  async function handleFundProject(_projectId, _amount) {
+    let ethersToWei = ethers.parseUnits(_amount.toString(), "ether");
+    const contract = await initializeProvider();
+    try {
+      const tx = await contract.fundProject(_projectId, {
+        value: ethersToWei,
+      });
+      await tx.wait();
+      fetchProjects();
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  async function handleCloseProject(_projectId) {
+    const contract = await initializeProvider();
+    try {
+      const tx = await contract.closeProject(_projectId);
+      await tx.wait();
+      fetchProjects();
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  async function handleWithdraw(_projectId, _stillFund) {
+    const contract = await initializeProvider();
+    try {
+      const tx = await contract.withdraw(_projectId, _stillFund);
+      await tx.wait();
+      fetchProjects();
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  async function handleAccountChanged() {
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_accounts",
+      });
+      if (accounts.length == 0) {
+        setCurrentAccount(undefined);
+      } else {
+        setCurrentAccount(accounts[0]);
+      }
+    } catch (error) {
+      // pending connection
+      if (error.code == -32002) {
+        showErrorMessage();
+        setErrorMessage("Connection in pending, check your MetaMask extension");
+      }
+      // user rejected connection
+      if (error.code == 4001) {
+        showErrorMessage();
+        setErrorMessage("Connection rejected");
       }
     }
   }
 
   useEffect(() => {
-    if (account) {
+    handleAccountChanged();
+    if (currentAccount) {
       fetchProjects();
-    } else {
-      requestAccount();
+    } else if (projects.length > 0) {
       setProjects([]);
     }
-  }, [account]);
+  }, [currentAccount]);
 
-  // reload page if chain changes
-  const chainChangedHandler = () => {
-    window.location.reload();
-  };
-
-  // listen for changes
-  window.ethereum.on("accountsChanged", requestAccount);
-  window.ethereum.on("chainChanged", chainChangedHandler);
+  window.ethereum.on("accountsChanged", handleAccountChanged);
+  window.ethereum.on("chainChanged", handleAccountChanged);
 
   return (
-    <Container>
-      <button onClick={requestAccount}>{connButtonText}</button>
-      <button onClick={handleShow}>Create Project</button>
-      <h1>{account}</h1>
-      <h2>{errorMessage}</h2>
+    <>
+      {!currentAccount ? (
+        <Container className="d-flex flex-column justify-content-center align-items-center">
+          <div className="mt-5">
+            <h1 className="text-center">Welcome to FundMeNow</h1>
+            <p className="text-center">
+              To use this app, you need to connect your MetaMask account
+            </p>
+          </div>
+          <Button className="mt-5 w-50" onClick={requestAccount}>
+            connect
+          </Button>
+        </Container>
+      ) : (
+        <Header
+          currentAccount={currentAccount}
+          showCreateProject={showCreateProject}
+        />
+      )}
       <Container>
-        <Row>
-          {projects.map((project) => (
-            <Col sm="6">
-              <CardProject key={project.id} project={project} />
-            </Col>
-          ))}
-        </Row>
-      </Container>
+        <Toast
+          className="position-absolute top-0 start-50 translate-middle-x mt-2"
+          show={errorMessageVisible}
+          onClose={hideErrorMessage}
+          style={{ zIndex: 1 }}
+        >
+          <Toast.Header>
+            <strong className="me-auto">Warning</strong>
+          </Toast.Header>
+          <Toast.Body>{errorMessage}</Toast.Body>
+        </Toast>
 
-      <Modal show={show} onHide={handleClose} backdrop="static">
-        <Modal.Header closeButton>
-          <Modal.Title>Modal heading</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Woohoo, you are reading this text in a modal!</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleClose}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
+        <CreateProjectModal
+          show={createProjectVisible}
+          onHide={hideCreateProject}
+          backdrop="static"
+          keyboard={false}
+          createProject={handleCreateProject}
+        />
+
+        <Container className="pt-4">
+          <Row>
+            {projects.map((project) => (
+              <Col className="p-3" xxl="4" xl="6" md="12">
+                <CardProject
+                  key={project.id}
+                  {...project}
+                  fundProject={handleFundProject}
+                  closeProject={handleCloseProject}
+                  withdraw={handleWithdraw}
+                  account={currentAccount}
+                />
+              </Col>
+            ))}
+          </Row>
+        </Container>
+      </Container>
+    </>
   );
 }
 

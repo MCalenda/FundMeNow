@@ -35,16 +35,19 @@ contract CrowdFunding {
     constructor() {
         owner = msg.sender;
         createProject(
-            "Prova",
-            "Questo e' un progetto di prova",
+            "Progetto di beneficenza",
+            "Raccolta fondi per la costruzione di un pozzo d'acqua in un villaggio rurale in Africa"
+            "per fornire acqua pulita e sicura alle famiglie e migliorare la loro qualita di vita.",
             1692007200,
-            10000000000000000000
+            15000000000000000000
         );
         createProject(
-            "Un altro progetto",
-            "Questo e' il secondo progetto di prova",
-            1895007200,
-            20000000000000000000
+            "Finanzia il mio viaggio!",
+            "Sto cercando dei fondi per un viaggio fotografico per documentare la cultura e la vita quotidiana "
+            "dei popoli indigeni delle Ande, con l'obiettivo di sensibilizzare il pubblico sulla loro "
+            "storia e le loro tradizioni.",
+            1692307248,
+            5000000000000000000
         );
     }
 
@@ -147,7 +150,6 @@ contract CrowdFunding {
 
         if (_project.state == State.OPEN_OBJ_REACHED) {
             payable(_project.owner).transfer(_project.balance);
-            _project.balance = 0;
             _project.state = State.CLOSED_OBJ_REACHED;
         } else {
             _project.state = State.CLOSED_OBJ_FAILED;
@@ -176,13 +178,15 @@ contract CrowdFunding {
         );
 
         uint256 contribution = contributions[_id][msg.sender];
-        _project.balance -= contribution;
         contributions[_id][msg.sender] = 0;
-        projects[_id] = _project;
+        if (stillFund) {
+            payable(_project.owner).transfer(contribution);
+        } else {
+            payable(msg.sender).transfer(contribution);
+            _project.balance -= contribution;
+        }
 
-        stillFund
-            ? payable(_project.owner).transfer(contribution)
-            : payable(msg.sender).transfer(contribution);
+        projects[_id] = _project;
     }
 
     // Project getters in string form

@@ -305,9 +305,10 @@ contract("CrowdFunding", (accounts) => {
     });
     balanceAfter = +(await web3.eth.getBalance(account3));
     project = await cf.getProject(closedObjFailed);
+    let contribution = await cf.getProjectContributions(closedObjFailed);
 
     assert.equal(
-      project.balance,
+      contribution,
       0,
       "The withdraw has not been correctly done."
     );
