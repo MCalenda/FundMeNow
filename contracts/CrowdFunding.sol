@@ -36,7 +36,7 @@ contract CrowdFunding {
         owner = msg.sender;
         createProject(
             "Progetto di beneficenza",
-            "Raccolta fondi per la costruzione di un pozzo d'acqua in un villaggio rurale in Africa"
+            "Raccolta fondi per la costruzione di un pozzo d'acqua in un villaggio rurale in Africa "
             "per fornire acqua pulita e sicura alle famiglie e migliorare la loro qualita di vita.",
             1692007200,
             15000000000000000000

@@ -6,12 +6,17 @@
 
 [![Travis CI](https://img.shields.io/travis/com/MCalenda/FundMeNow?label=Travis%20CI&style=for-the-badge)](https://app.travis-ci.com/github/MCalenda/FundMeNow)
 
-
 </div>
 
 ## Introduction
 
-The project is developed for *Data Security* course at [@Unisa](https://unisa.it)
+**FundMeNow** is a decentralized crowdfunding platform based on Ethereum blockchain developed using Truffle and ReactJS for the _Data Security_ course at [@Unisa](https://unisa.it). User accounts can create projects in order to raise funds (ETH) for multiple purposes. The platform is based on the _All-or-Nothing_ model, which means that the project owner can withdraw the funds only if the campaign is successful, otherwise the funds are withdrawable by the funder whom can still fund the campaign after the deadline has passed, and the target has not been reached.
+
+<div align=center>
+
+![Cover](/public/cover.png)
+
+</div>
 
 ## Programming languages and technologies
 
@@ -29,6 +34,47 @@ The project is developed for *Data Security* course at [@Unisa](https://unisa.it
 ![Mocha Badge](https://img.shields.io/badge/Mocha-8D6748?logo=mocha&logoColor=fff&style=for-the-badge)
 
 </div>
+
+## Installation 
+
+The project is divided into two main folders: `client` and `contracts`. The former contains the ReactJS application, while the latter contains the Solidity smart contracts. The `migrations` folder contains the migration scripts for the smart contracts.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/en/) (v14.17.0)
+- [Truffle](https://www.trufflesuite.com/truffle) (v5.3.10)
+- [Ganache](https://www.trufflesuite.com/ganache)
+- [MetaMask](https://metamask.io/) (v9.5.0)
+
+### Installation
+
+1. Install NPM packages.
+   ```sh
+   npm install
+   ```
+2. Run the local blockchain using Ganache, the default port is `8545`.
+
+   ```sh
+   ganache-cli
+   ```
+
+   Optionally: run the blockchain with the reccomended prameters using the provided script, this will launch the blockchain in deterministic mode saving the db in the `./ganache_db` folder.
+
+   ```sh
+   chmod +x ./scripts/run_ganache.sh
+   ./scripts/run_ganache.sh
+   ```
+
+3. Migrate the smart contracts.
+   ```sh
+   truffle migrate
+   ```
+4. Run the ReactJS application, the default port is `3000`.
+   ```sh
+   npm start
+   ```
+
+In order to use FundMeNow is required to have MetaMask wallet (or similar) connected to ganache, we suggest to use the chrome extension.
 
 ## License
 
