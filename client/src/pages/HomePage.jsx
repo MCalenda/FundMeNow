@@ -179,62 +179,63 @@ export default function HomePage() {
 
   return (
     <>
+      <Toast
+        className="position-absolute bottom-0 start-50 translate-middle-x mb-5"
+        show={errorMessageVisible}
+        onClose={hideErrorMessage}
+        style={{ zIndex: 1 }}
+      >
+        <Toast.Header>
+          <strong className="me-auto text-warning">Warning</strong>
+        </Toast.Header>
+        <Toast.Body>{errorMessage}</Toast.Body>
+      </Toast>
+
       {!currentAccount ? (
-        <Container className="d-flex flex-column justify-content-center align-items-center">
-          <div className="mt-5">
-            <h1 className="text-center">Welcome to FundMeNow</h1>
-            <p className="text-center">
-              To use this app, you need to connect your MetaMask account
-            </p>
-          </div>
-          <Button className="mt-5 w-50" onClick={requestAccount}>
+        <div className="d-flex flex-column justify-content-center align-items-center bg-dark text-light vh-100">
+          <h1 className="text-center">Welcome to FundMeNow</h1>
+          <p className="text-center">
+            To use this app, you need to connect your MetaMask account
+          </p>
+          <Button className="mt-5 w-25" onClick={requestAccount}>
             connect
           </Button>
-        </Container>
+        </div>
       ) : (
-        <Header
-          currentAccount={currentAccount}
-          showCreateProject={showCreateProject}
-        />
+        <>
+          <Header
+            currentAccount={currentAccount}
+            showCreateProject={showCreateProject}
+            style={{ zIndex: 0 }}
+          />
+          <Container>
+            <CreateProjectModal
+              show={createProjectVisible}
+              onHide={hideCreateProject}
+              backdrop="static"
+              keyboard={false}
+              createProject={handleCreateProject}
+            />
+
+            <Container className="pt-4">
+              <Row>
+                {projects.map((project) => (
+                  <Col className="p-3" xxl="4" xl="6" md="12">
+                    <CardProject
+                      key={project.id}
+                      {...project}
+                      fundProject={handleFundProject}
+                      closeProject={handleCloseProject}
+                      withdraw={handleWithdraw}
+                      account={currentAccount}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            </Container>
+          </Container>
+        </>
       )}
-      <Container>
-        <Toast
-          className="position-absolute top-0 start-50 translate-middle-x mt-2"
-          show={errorMessageVisible}
-          onClose={hideErrorMessage}
-          style={{ zIndex: 1 }}
-        >
-          <Toast.Header>
-            <strong className="me-auto">Warning</strong>
-          </Toast.Header>
-          <Toast.Body>{errorMessage}</Toast.Body>
-        </Toast>
-
-        <CreateProjectModal
-          show={createProjectVisible}
-          onHide={hideCreateProject}
-          backdrop="static"
-          keyboard={false}
-          createProject={handleCreateProject}
-        />
-
-        <Container className="pt-4">
-          <Row>
-            {projects.map((project) => (
-              <Col className="p-3" xxl="4" xl="6" md="12">
-                <CardProject
-                  key={project.id}
-                  {...project}
-                  fundProject={handleFundProject}
-                  closeProject={handleCloseProject}
-                  withdraw={handleWithdraw}
-                  account={currentAccount}
-                />
-              </Col>
-            ))}
-          </Row>
-        </Container>
-      </Container>
     </>
   );
 }
